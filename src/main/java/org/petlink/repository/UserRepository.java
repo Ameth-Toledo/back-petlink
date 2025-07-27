@@ -56,7 +56,7 @@ public class UserRepository {
     }
 
     public void save(User user) throws Exception {
-        String query = "INSERT INTO usuario (tipo_usuario, nombres, apellido_materno, apellido_paterno, correo, contraseña, INE) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO usuario (tipo_usuario, nombres, apellido_materno, apellido_paterno, edad, correo, contraseña, INE) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -64,9 +64,10 @@ public class UserRepository {
             stmt.setString(2, user.getNombres());
             stmt.setString(3, user.getApellido_materno());
             stmt.setString(4, user.getApellido_paterno());
-            stmt.setString(5, user.getCorreo());
-            stmt.setString(6, user.getContraseña());
-            stmt.setString(7, user.getIne());
+            stmt.setInt(5, user.getEdad());
+            stmt.setString(6, user.getCorreo());
+            stmt.setString(7, user.getContraseña());
+            stmt.setString(8, user.getIne());
 
             stmt.executeUpdate();
             
@@ -79,7 +80,7 @@ public class UserRepository {
     }
 
     public void update(int id, User user) throws Exception {
-        String query = "UPDATE usuario SET tipo_usuario=?, nombres=?, apellido_materno=?, apellido_paterno=?, correo=?, contraseña=?, INE=? WHERE id_usuario=?";
+        String query = "UPDATE usuario SET tipo_usuario=?, nombres=?, apellido_materno=?, apellido_paterno=?, edad=?, correo=?, contraseña=?, INE=? WHERE id_usuario=?";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -87,10 +88,11 @@ public class UserRepository {
             stmt.setString(2, user.getNombres());
             stmt.setString(3, user.getApellido_materno());
             stmt.setString(4, user.getApellido_paterno());
-            stmt.setString(5, user.getCorreo());
-            stmt.setString(6, user.getContraseña());
-            stmt.setString(7, user.getIne());
-            stmt.setInt(8, id);
+            stmt.setInt(5, user.getEdad());
+            stmt.setString(6, user.getCorreo());
+            stmt.setString(7, user.getContraseña());
+            stmt.setString(8, user.getIne());
+            stmt.setInt(9, id);
 
             stmt.executeUpdate();
         }
@@ -113,6 +115,7 @@ public class UserRepository {
         user.setNombres(rs.getString("nombres"));
         user.setApellido_materno(rs.getString("apellido_materno"));
         user.setApellido_paterno(rs.getString("apellido_paterno"));
+        user.setEdad(rs.getInt("edad"));
         user.setCorreo(rs.getString("correo"));
         user.setContraseña(rs.getString("contraseña"));
         user.setIne(rs.getString("INE"));

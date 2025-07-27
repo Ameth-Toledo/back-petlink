@@ -9,104 +9,134 @@ import java.util.List;
 
 public class MascotaRepository {
 
-    public List<Mascota> findAll() throws Exception {
+    public List<Mascota> findAll() throws SQLException {
         List<Mascota> mascotas = new ArrayList<>();
         String query = "SELECT * FROM mascota";
 
-        try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                mascotas.add(mapResult(rs));
+        try {
+            try (Connection conn = DatabaseConfig.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(query);
+                 ResultSet rs = stmt.executeQuery()) {
+                
+                while (rs.next()) {
+                    mascotas.add(mapResultSetToMascota(rs));
+                }
             }
+        } catch (Exception e) {
+            throw new SQLException("Error al obtener todas las mascotas", e);
         }
-
         return mascotas;
     }
 
-    public Mascota findById(int id) throws Exception {
-        String query = "SELECT * FROM mascota WHERE id_mascotas = ?";
-        try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                return mapResult(rs);
+    public Mascota findById(int id) throws SQLException {
+        String query = "SELECT * FROM mascota WHERE id_mascota = ?";
+        
+        try {
+            try (Connection conn = DatabaseConfig.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(query)) {
+                
+                stmt.setInt(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return mapResultSetToMascota(rs);
+                    }
+                }
             }
+        } catch (Exception e) {
+            throw new SQLException("Error al buscar mascota por ID: " + id, e);
         }
-
         return null;
     }
 
-    public void save(Mascota m) throws Exception {
-        String query = "INSERT INTO mascota (nombre_mascotas, codigo_especie, sexo, peso, codigo_tamaño, raza, esterilizado, desparasitado, discapacitado, enfermedades, codigo_vacunas, descripcion, id_Cedente) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, m.getNombre_mascotas());
-            stmt.setInt(2, m.getCodigo_especie());
-            stmt.setString(3, m.getSexo());
-            stmt.setFloat(4, m.getPeso());
-            stmt.setInt(5, m.getCodigo_tamaño());
-            stmt.setString(6, m.getRaza());
-            stmt.setString(7, m.getEsterilizado());
-            stmt.setString(8, m.getDesparasitado());
-            stmt.setString(9, m.getDiscapacitado());
-            stmt.setString(10, m.getEnfermedades());
-            stmt.setInt(11, m.getCodigo_vacunas());
-            stmt.setString(12, m.getDescripcion());
-            stmt.setInt(13, m.getId_Cedente());
-            stmt.executeUpdate();
+    public int save(Mascota mascota) throws SQLException {
+        String query = "INSERT INTO mascota (nombre, especie, sexo, peso, tamaño, esterilizado, " +
+                      "discapacitado, desparasitado, vacunas, descripcion, fotos_mascota, id_cedente) " +
+                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        try {
+            try (Connection conn = DatabaseConfig.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+                
+                setMascotaParameters(stmt, mascota);
+                stmt.executeUpdate();
+                
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getInt(1);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException("Error al guardar mascota", e);
+        }
+        throw new SQLException("No se pudo guardar la mascota, no se obtuvo ID");
+    }
+
+    public void update(Mascota mascota) throws SQLException {
+        String query = "UPDATE mascota SET nombre = ?, especie = ?, sexo = ?, peso = ?, " +
+                      "tamaño = ?, esterilizado = ?, discapacitado = ?, desparasitado = ?, " +
+                      "vacunas = ?, descripcion = ?, fotos_mascota = ?, id_cedente = ? " +
+                      "WHERE id_mascota = ?";
+        
+        try {
+            try (Connection conn = DatabaseConfig.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(query)) {
+                
+                setMascotaParameters(stmt, mascota);
+                stmt.setInt(13, mascota.getId());
+                stmt.executeUpdate();
+            }
+        } catch (Exception e) {
+            throw new SQLException("Error al actualizar mascota con ID: " + mascota.getId(), e);
         }
     }
 
-    public void update(int id, Mascota m) throws Exception {
-        String query = "UPDATE mascota SET nombre_mascotas=?, codigo_especie=?, sexo=?, peso=?, codigo_tamaño=?, raza=?, esterilizado=?, desparasitado=?, discapacitado=?, enfermedades=?, codigo_vacunas=?, descripcion=?, id_Cedente=? WHERE id_mascotas=?";
-        try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, m.getNombre_mascotas());
-            stmt.setInt(2, m.getCodigo_especie());
-            stmt.setString(3, m.getSexo());
-            stmt.setFloat(4, m.getPeso());
-            stmt.setInt(5, m.getCodigo_tamaño());
-            stmt.setString(6, m.getRaza());
-            stmt.setString(7, m.getEsterilizado());
-            stmt.setString(8, m.getDesparasitado());
-            stmt.setString(9, m.getDiscapacitado());
-            stmt.setString(10, m.getEnfermedades());
-            stmt.setInt(11, m.getCodigo_vacunas());
-            stmt.setString(12, m.getDescripcion());
-            stmt.setInt(13, m.getId_Cedente());
-            stmt.setInt(14, id);
-            stmt.executeUpdate();
+    public void delete(int id) throws SQLException {
+        String query = "DELETE FROM mascota WHERE id_mascota = ?";
+        
+        try {
+            try (Connection conn = DatabaseConfig.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(query)) {
+                
+                stmt.setInt(1, id);
+                stmt.executeUpdate();
+            }
+        } catch (Exception e) {
+            throw new SQLException("Error al eliminar mascota con ID: " + id, e);
         }
     }
 
-    public void delete(int id) throws Exception {
-        String query = "DELETE FROM mascota WHERE id_mascotas = ?";
-        try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, id);
-            stmt.executeUpdate();
-        }
+    private void setMascotaParameters(PreparedStatement stmt, Mascota mascota) throws SQLException {
+        stmt.setString(1, mascota.getNombre());
+        stmt.setString(2, mascota.getEspecie());
+        stmt.setString(3, mascota.getSexo());
+        stmt.setFloat(4, mascota.getPeso());
+        stmt.setString(5, mascota.getTamaño());
+        stmt.setString(6, mascota.getEsterilizado());
+        stmt.setString(7, mascota.getDiscapacitado());
+        stmt.setString(8, mascota.getDesparasitado());
+        stmt.setString(9, mascota.getVacunas());
+        stmt.setString(10, mascota.getDescripcion());
+        stmt.setString(11, mascota.getFotosAsString());
+        stmt.setInt(12, mascota.getIdCedente());
     }
 
-    private Mascota mapResult(ResultSet rs) throws SQLException {
-        Mascota m = new Mascota();
-        m.setId_mascotas(rs.getInt("id_mascotas"));
-        m.setNombre_mascotas(rs.getString("nombre_mascotas"));
-        m.setCodigo_especie(rs.getInt("codigo_especie"));
-        m.setSexo(rs.getString("sexo"));
-        m.setPeso(rs.getFloat("peso"));
-        m.setCodigo_tamaño(rs.getInt("codigo_tamaño"));
-        m.setRaza(rs.getString("raza"));
-        m.setEsterilizado(rs.getString("esterilizado"));
-        m.setDesparasitado(rs.getString("desparasitado"));
-        m.setDiscapacitado(rs.getString("discapacitado"));
-        m.setEnfermedades(rs.getString("enfermedades"));
-        m.setCodigo_vacunas(rs.getInt("codigo_vacunas"));
-        m.setDescripcion(rs.getString("descripcion"));
-        m.setId_Cedente(rs.getInt("id_Cedente"));
-        return m;
+    private Mascota mapResultSetToMascota(ResultSet rs) throws SQLException {
+        Mascota mascota = new Mascota();
+        mascota.setId(rs.getInt("id_mascota"));
+        mascota.setNombre(rs.getString("nombre"));
+        mascota.setEspecie(rs.getString("especie"));
+        mascota.setSexo(rs.getString("sexo"));
+        mascota.setPeso(rs.getFloat("peso"));
+        mascota.setTamaño(rs.getString("tamaño"));
+        mascota.setEsterilizado(rs.getString("esterilizado"));
+        mascota.setDiscapacitado(rs.getString("discapacitado"));
+        mascota.setDesparasitado(rs.getString("desparasitado"));
+        mascota.setVacunas(rs.getString("vacunas"));
+        mascota.setDescripcion(rs.getString("descripcion"));
+        mascota.setFotosFromString(rs.getString("fotos_mascota"));
+        mascota.setIdCedente(rs.getInt("id_cedente"));
+        
+        return mascota;
     }
 }

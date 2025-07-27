@@ -1,44 +1,83 @@
 package org.petlink.model;
 
+import java.util.List;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public class Mascota {
-    private int id_mascotas;
-    private String nombre_mascotas;
-    private int codigo_especie;
+    private int id;
+    private String nombre;
+    private String especie;
     private String sexo;
     private float peso;
-    private int codigo_tamaño;
-    private String raza;
+    private String tamaño;
     private String esterilizado;
-    private String desparasitado;
     private String discapacitado;
-    private String enfermedades;
-    private int codigo_vacunas;
+    private String desparasitado;
+    private String vacunas;
     private String descripcion;
-    private int id_Cedente;
+    private List<String> fotos_mascota;
+    private int idCedente;
+    
+    public Mascota() {}
 
-    // Getters y Setters
-    public int getId_mascotas() {
-        return id_mascotas;
+    public Mascota(String nombre, String especie, String sexo, float peso, String tamaño, 
+                  String esterilizado, String discapacitado, String desparasitado, 
+                  String vacunas, String descripcion, List<String> fotos_mascota, int idCedente) {
+        this.nombre = nombre;
+        this.especie = especie;
+        this.sexo = sexo;
+        this.peso = peso;
+        this.tamaño = tamaño;
+        this.esterilizado = esterilizado;
+        this.discapacitado = discapacitado;
+        this.desparasitado = desparasitado;
+        this.vacunas = vacunas;
+        this.descripcion = descripcion;
+        this.fotos_mascota = fotos_mascota;
+        this.idCedente = idCedente;
     }
 
-    public void setId_mascotas(int id_mascotas) {
-        this.id_mascotas = id_mascotas;
+    public String getFotosAsString() {
+        if (fotos_mascota == null || fotos_mascota.isEmpty()) {
+            return "";
+        }
+        return String.join(",", fotos_mascota);
     }
 
-    public String getNombre_mascotas() {
-        return nombre_mascotas;
+    public void setFotosFromString(String fotosString) {
+        if (fotosString == null || fotosString.trim().isEmpty()) {
+            this.fotos_mascota = null;
+        } else {
+            this.fotos_mascota = Arrays.stream(fotosString.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+        }
+    }
+    
+    public int getId() {
+        return id;
     }
 
-    public void setNombre_mascotas(String nombre_mascotas) {
-        this.nombre_mascotas = nombre_mascotas;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public int getCodigo_especie() {
-        return codigo_especie;
+    public String getNombre() {
+        return nombre;
     }
 
-    public void setCodigo_especie(int codigo_especie) {
-        this.codigo_especie = codigo_especie;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getEspecie() {
+        return especie;
+    }
+
+    public void setEspecie(String especie) {
+        this.especie = especie;
     }
 
     public String getSexo() {
@@ -57,20 +96,12 @@ public class Mascota {
         this.peso = peso;
     }
 
-    public int getCodigo_tamaño() {
-        return codigo_tamaño;
+    public String getTamaño() {
+        return tamaño;
     }
 
-    public void setCodigo_tamaño(int codigo_tamaño) {
-        this.codigo_tamaño = codigo_tamaño;
-    }
-
-    public String getRaza() {
-        return raza;
-    }
-
-    public void setRaza(String raza) {
-        this.raza = raza;
+    public void setTamaño(String tamaño) {
+        this.tamaño = tamaño;
     }
 
     public String getEsterilizado() {
@@ -81,14 +112,6 @@ public class Mascota {
         this.esterilizado = esterilizado;
     }
 
-    public String getDesparasitado() {
-        return desparasitado;
-    }
-
-    public void setDesparasitado(String desparasitado) {
-        this.desparasitado = desparasitado;
-    }
-
     public String getDiscapacitado() {
         return discapacitado;
     }
@@ -97,20 +120,20 @@ public class Mascota {
         this.discapacitado = discapacitado;
     }
 
-    public String getEnfermedades() {
-        return enfermedades;
+    public String getDesparasitado() {
+        return desparasitado;
     }
 
-    public void setEnfermedades(String enfermedades) {
-        this.enfermedades = enfermedades;
+    public void setDesparasitado(String desparasitado) {
+        this.desparasitado = desparasitado;
     }
 
-    public int getCodigo_vacunas() {
-        return codigo_vacunas;
+    public String getVacunas() {
+        return vacunas;
     }
 
-    public void setCodigo_vacunas(int codigo_vacunas) {
-        this.codigo_vacunas = codigo_vacunas;
+    public void setVacunas(String vacunas) {
+        this.vacunas = vacunas;
     }
 
     public String getDescripcion() {
@@ -121,11 +144,19 @@ public class Mascota {
         this.descripcion = descripcion;
     }
 
-    public int getId_Cedente() {
-        return id_Cedente;
+    public List<String> getFotos_mascota() {
+        return fotos_mascota;
     }
 
-    public void setId_Cedente(int id_Cedente) {
-        this.id_Cedente = id_Cedente;
+    public void setFotos_mascota(List<String> fotos_mascota) {
+        this.fotos_mascota = fotos_mascota;
+    }
+
+    public int getIdCedente() {
+        return idCedente;
+    }
+
+    public void setIdCedente(int idCedente) {
+        this.idCedente = idCedente;
     }
 }

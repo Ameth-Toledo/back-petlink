@@ -6,9 +6,10 @@ public class User {
     private String nombres;
     private String apellido_materno;
     private String apellido_paterno;
+    private int edad;  
     private String correo;
     private String contraseña;
-    private String ine;
+    private String ine;  
 
     public int getId_usuario() {
         return id_usuario;
@@ -48,6 +49,14 @@ public class User {
 
     public void setApellido_paterno(String apellido_paterno) {
         this.apellido_paterno = apellido_paterno;
+    }
+
+    public int getEdad() { 
+        return edad;
+    }
+
+    public void setEdad(int edad) { 
+        this.edad = edad;
     }
 
     public String getCorreo() {

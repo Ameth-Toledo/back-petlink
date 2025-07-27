@@ -154,13 +154,11 @@ public class SolicitudCedenteController {
                 List<UploadedFile> nuevasFotos = ctx.uploadedFiles("fotos_mascotas");
                 
                 if (nuevasFotos != null && !nuevasFotos.isEmpty()) {
-                    // Verificar que sean exactamente 3 fotos
                     if (nuevasFotos.size() != 3) {
                         ctx.status(400).json(Map.of("error", "Se requieren exactamente 3 fotos de la mascota"));
                         return;
                     }
 
-                    // Eliminar fotos antiguas
                     if (solicitudActual.getFotos_mascotas() != null) {
                         for (String fotoUrl : solicitudActual.getFotos_mascotas()) {
                             try {
