@@ -15,7 +15,6 @@ public class PublicacionRoutes {
         app.put("/publicaciones/{id}", controller::update);
         app.delete("/publicaciones/{id}", controller::delete);
 
-        // 📌 Ruta adicional para vincular solicitud con publicación
         app.post("/publicaciones/vincular/solicitud/{idSolicitud}/publicacion/{idPublicacion}",
                  controller::vincularSolicitudAdopcion);
     }
