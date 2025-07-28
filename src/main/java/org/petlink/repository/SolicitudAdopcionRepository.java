@@ -13,7 +13,7 @@ import org.petlink.model.SolicitudAdopcion;
 
 public class SolicitudAdopcionRepository {
 
-    public List<SolicitudAdopcion> findAll() throws Exception {
+    public List<SolicitudAdopcion> findAll() throws SQLException {
         List<SolicitudAdopcion> list = new ArrayList<>();
         String sql = "SELECT * FROM solicitud_adopcion";
 
@@ -23,129 +23,142 @@ public class SolicitudAdopcionRepository {
             while (rs.next()) {
                 list.add(map(rs));
             }
+        } catch (Exception e) {
+            throw new SQLException("Error al obtener todas las solicitudes de adopción", e);
         }
         return list;
     }
 
-    public SolicitudAdopcion findById(int id) throws Exception {
-        String sql = "SELECT * FROM solicitud_adopcion WHERE id_solicitudAdopcion=?";
+    public SolicitudAdopcion findById(int id) throws SQLException {
+        String sql = "SELECT * FROM solicitud_adopcion WHERE id_solicitud=?";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-            return rs.next() ? map(rs) : null;
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
+        } catch (Exception e) {
+            throw new SQLException("Error al obtener la solicitud de adopción con ID: " + id, e);
         }
     }
 
-    public void save(SolicitudAdopcion s) throws Exception {
-        String sql = "INSERT INTO solicitud_adopcion (ocupacion_usuario, tipo_vivienda, mascotas_previas, estado_vivienda, permisopara_mascotas, numero_personas, niños_casa, experiencia_mascotas, fecha_solicitudAdopcion, foto_vivienda, estado_solicitudAdopcion, codigo_usuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public void save(SolicitudAdopcion s) throws SQLException {
+        String sql = "INSERT INTO solicitud_adopcion (" +
+            "mascota_id, adoptante_id, nombre_solicitante, apellido_paterno, apellido_materno, " +
+            "edad, correo, ocupacion, personas_vivienda, hay_ninos, permite_mascotas, " +
+            "tipo_vivienda, tipo_propiedad, experiencia, historial_mascotas, " +
+            "ine_document, espacio_mascota, fecha_solicitud, estado_solicitud" +
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, s.getOcupacion_usuario());
-            stmt.setString(2, s.getTipo_vivienda());
-            stmt.setString(3, s.getMascotas_previas());
-            stmt.setString(4, s.getEstado_vivienda());
-            stmt.setString(5, s.getPermisopara_mascotas());
-            stmt.setInt(6, s.getNumero_personas());
-            stmt.setString(7, s.getNiños_casa());
-            stmt.setString(8, s.getExperiencia_mascotas());
-            stmt.setDate(9, s.getFecha_solicitudAdopcion());
-            stmt.setString(10, s.getFoto_vivienda());
-            stmt.setString(11, s.getEstado_solicitudAdopcion());
-            stmt.setInt(12, s.getCodigo_usuario());
-
+            setStatementParameters(stmt, s);
             stmt.executeUpdate();
+        } catch (Exception e) {
+            throw new SQLException("Error al guardar la solicitud de adopción", e);
         }
     }
 
-    public int saveAndReturnId(SolicitudAdopcion s) throws Exception {
+    public int saveAndReturnId(SolicitudAdopcion s) throws SQLException {
         String sql = "INSERT INTO solicitud_adopcion (" +
-                    "ocupacion_usuario, tipo_vivienda, mascotas_previas, " +
-                    "estado_vivienda, permisopara_mascotas, numero_personas, " +
-                    "niños_casa, experiencia_mascotas, fecha_solicitudAdopcion, " +
-                    "foto_vivienda, estado_solicitudAdopcion, codigo_usuario" +
-                    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            "mascota_id, adoptante_id, nombre_solicitante, apellido_paterno, apellido_materno, " +
+            "edad, correo, ocupacion, personas_vivienda, hay_ninos, permite_mascotas, " +
+            "tipo_vivienda, tipo_propiedad, experiencia, historial_mascotas, " +
+            "ine_document, espacio_mascota, fecha_solicitud, estado_solicitud" +
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setString(1, s.getOcupacion_usuario());
-            stmt.setString(2, s.getTipo_vivienda());
-            stmt.setString(3, s.getMascotas_previas());
-            stmt.setString(4, s.getEstado_vivienda());
-            stmt.setString(5, s.getPermisopara_mascotas());
-            stmt.setInt(6, s.getNumero_personas());
-            stmt.setString(7, s.getNiños_casa());
-            stmt.setString(8, s.getExperiencia_mascotas());
-            stmt.setDate(9, s.getFecha_solicitudAdopcion());
-            stmt.setString(10, s.getFoto_vivienda());
-            stmt.setString(11, s.getEstado_solicitudAdopcion());
-            stmt.setInt(12, s.getCodigo_usuario());
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new SQLException("La creación de la solicitud falló, no se afectaron filas.");
-            }
+            setStatementParameters(stmt, s);
+            stmt.executeUpdate();
 
             try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     return generatedKeys.getInt(1);
                 } else {
-                    throw new SQLException("La creación de la solicitud falló, no se obtuvo ID.");
+                    throw new SQLException("No se pudo obtener el ID generado");
                 }
             }
+        } catch (Exception e) {
+            throw new SQLException("Error al guardar la solicitud de adopción y obtener ID", e);
         }
     }
 
-    public void update(int id, SolicitudAdopcion s) throws Exception {
-        String sql = "UPDATE solicitud_adopcion SET ocupacion_usuario=?, tipo_vivienda=?, mascotas_previas=?, estado_vivienda=?, permisopara_mascotas=?, numero_personas=?, niños_casa=?, experiencia_mascotas=?, fecha_solicitudAdopcion=?, foto_vivienda=?, estado_solicitudAdopcion=?, codigo_usuario=? WHERE id_solicitudAdopcion=?";
+    public void update(int id, SolicitudAdopcion s) throws SQLException {
+        String sql = "UPDATE solicitud_adopcion SET " +
+            "mascota_id=?, adoptante_id=?, nombre_solicitante=?, apellido_paterno=?, apellido_materno=?, " +
+            "edad=?, correo=?, ocupacion=?, personas_vivienda=?, hay_ninos=?, permite_mascotas=?, " +
+            "tipo_vivienda=?, tipo_propiedad=?, experiencia=?, historial_mascotas=?, " +
+            "ine_document=?, espacio_mascota=?, fecha_solicitud=?, estado_solicitud=? " +
+            "WHERE id_solicitud=?";
+
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, s.getOcupacion_usuario());
-            stmt.setString(2, s.getTipo_vivienda());
-            stmt.setString(3, s.getMascotas_previas());
-            stmt.setString(4, s.getEstado_vivienda());
-            stmt.setString(5, s.getPermisopara_mascotas());
-            stmt.setInt(6, s.getNumero_personas());
-            stmt.setString(7, s.getNiños_casa());
-            stmt.setString(8, s.getExperiencia_mascotas());
-            stmt.setDate(9, s.getFecha_solicitudAdopcion());
-            stmt.setString(10, s.getFoto_vivienda());
-            stmt.setString(11, s.getEstado_solicitudAdopcion());
-            stmt.setInt(12, s.getCodigo_usuario());
-            stmt.setInt(13, id);
-
+            setStatementParameters(stmt, s);
+            stmt.setInt(20, id);
             stmt.executeUpdate();
+        } catch (Exception e) {
+            throw new SQLException("Error al actualizar la solicitud de adopción con ID: " + id, e);
         }
     }
 
-    public void delete(int id) throws Exception {
-        String sql = "DELETE FROM solicitud_adopcion WHERE id_solicitudAdopcion=?";
+    public void delete(int id) throws SQLException {
+        String sql = "DELETE FROM solicitud_adopcion WHERE id_solicitud=?";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
             stmt.executeUpdate();
+        } catch (Exception e) {
+            throw new SQLException("Error al eliminar la solicitud de adopción con ID: " + id, e);
         }
+    }
+
+    private void setStatementParameters(PreparedStatement stmt, SolicitudAdopcion s) throws SQLException {
+        stmt.setString(1, s.getMascotaId());
+        stmt.setString(2, s.getAdoptanteId());
+        stmt.setString(3, s.getNombre());
+        stmt.setString(4, s.getApellidoPaterno());
+        stmt.setString(5, s.getApellidoMaterno());
+        stmt.setInt(6, s.getEdad());
+        stmt.setString(7, s.getCorreo());
+        stmt.setString(8, s.getOcupacion());
+        stmt.setInt(9, s.getPersonasVivienda());
+        stmt.setString(10, s.getHayNinos());
+        stmt.setString(11, s.getPermiteMascotas());
+        stmt.setString(12, s.getTipoVivienda());
+        stmt.setString(13, s.getTipoPropiedad());
+        stmt.setString(14, s.getExperiencia());
+        stmt.setString(15, s.getHistorialMascotas());
+        stmt.setString(16, s.getIneDocument());
+        stmt.setString(17, s.getEspacioMascota());
+        stmt.setDate(18, s.getFechaSolicitud());
+        stmt.setString(19, s.getEstadoSolicitud());
     }
 
     private SolicitudAdopcion map(ResultSet rs) throws SQLException {
         SolicitudAdopcion s = new SolicitudAdopcion();
-            s.setId_solicitudAdopcion(rs.getInt("id_solicitudAdopcion"));
-            s.setOcupacion_usuario(rs.getString("ocupacion_usuario"));
-            s.setTipo_vivienda(rs.getString("tipo_vivienda"));
-            s.setMascotas_previas(rs.getString("mascotas_previas"));
-            s.setEstado_vivienda(rs.getString("estado_vivienda"));
-            s.setPermisopara_mascotas(rs.getString("permisopara_mascotas"));
-            s.setNumero_personas(rs.getInt("numero_personas"));
-            s.setNiños_casa(rs.getString("niños_casa"));
-            s.setExperiencia_mascotas(rs.getString("experiencia_mascotas"));
-            s.setFecha_solicitudAdopcion(rs.getDate("fecha_solicitudAdopcion"));
-            s.setFoto_vivienda(rs.getString("foto_vivienda"));  
-            s.setEstado_solicitudAdopcion(rs.getString("estado_solicitudAdopcion"));
-            s.setCodigo_usuario(rs.getInt("codigo_usuario"));
+        s.setMascotaId(rs.getString("mascota_id"));
+        s.setAdoptanteId(rs.getString("adoptante_id"));
+        s.setNombre(rs.getString("nombre_solicitante"));
+        s.setApellidoPaterno(rs.getString("apellido_paterno"));
+        s.setApellidoMaterno(rs.getString("apellido_materno"));
+        s.setEdad(rs.getInt("edad"));
+        s.setCorreo(rs.getString("correo"));
+        s.setOcupacion(rs.getString("ocupacion"));
+        s.setPersonasVivienda(rs.getInt("personas_vivienda"));
+        s.setHayNinos(rs.getString("hay_ninos"));
+        s.setPermiteMascotas(rs.getString("permite_mascotas"));
+        s.setTipoVivienda(rs.getString("tipo_vivienda"));
+        s.setTipoPropiedad(rs.getString("tipo_propiedad"));
+        s.setExperiencia(rs.getString("experiencia"));
+        s.setHistorialMascotas(rs.getString("historial_mascotas"));
+        s.setIneDocument(rs.getString("ine_document"));
+        s.setEspacioMascota(rs.getString("espacio_mascota"));
+        s.setFechaSolicitud(rs.getDate("fecha_solicitud"));
+        s.setEstadoSolicitud(rs.getString("estado_solicitud"));
         return s;
     }
 }

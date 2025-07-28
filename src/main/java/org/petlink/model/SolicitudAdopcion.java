@@ -3,124 +3,231 @@ package org.petlink.model;
 import java.sql.Date;
 
 public class SolicitudAdopcion {
+    private String mascotaId;
+    private String adoptanteId;
+    private String nombre;
+    private String apellidoPaterno;
+    private String apellidoMaterno;
+    private int edad;
+    private String correo;
+    private String ocupacion;
+    private int personasVivienda;
+    private String hayNinos;
+    private String permiteMascotas;
+    private String tipoVivienda;
+    private String tipoPropiedad;
+    private String experiencia;
+    private String historialMascotas;
+    private String ineDocument; // Puede ser String (ruta) o byte[] para el archivo
+    private String espacioMascota; // Puede ser String (ruta) o byte[] para el archivo
+    private Date fechaSolicitud;
+    private String estadoSolicitud;
 
-    private int id_solicitudAdopcion;
-    private String ocupacion_usuario;
-    private String tipo_vivienda;
-    private String mascotas_previas;
-    private String estado_vivienda;
-    private String permisopara_mascotas;
-    private int numero_personas;
-    private String niños_casa;
-    private String experiencia_mascotas;
-    private Date fecha_solicitudAdopcion;
-    private String foto_vivienda;
-    private String estado_solicitudAdopcion;
-
-    private int codigo_usuario;
-
-    public int getId_solicitudAdopcion() {
-        return id_solicitudAdopcion;
+    // Constructores
+    public SolicitudAdopcion() {
     }
 
-    public String getOcupacion_usuario() {
-        return ocupacion_usuario;
+    public SolicitudAdopcion(String mascotaId, String adoptanteId, String nombre, String apellidoPaterno, 
+                           String apellidoMaterno, int edad, String correo, String ocupacion, 
+                           int personasVivienda, String hayNinos, String permiteMascotas, 
+                           String tipoVivienda, String tipoPropiedad, String experiencia, 
+                           String historialMascotas, String ineDocument, String espacioMascota) {
+        this.mascotaId = mascotaId;
+        this.adoptanteId = adoptanteId;
+        this.nombre = nombre;
+        this.apellidoPaterno = apellidoPaterno;
+        this.apellidoMaterno = apellidoMaterno;
+        this.edad = edad;
+        this.correo = correo;
+        this.ocupacion = ocupacion;
+        this.personasVivienda = personasVivienda;
+        this.hayNinos = hayNinos;
+        this.permiteMascotas = permiteMascotas;
+        this.tipoVivienda = tipoVivienda;
+        this.tipoPropiedad = tipoPropiedad;
+        this.experiencia = experiencia;
+        this.historialMascotas = historialMascotas;
+        this.ineDocument = ineDocument;
+        this.espacioMascota = espacioMascota;
+        this.fechaSolicitud = new Date(System.currentTimeMillis());
+        this.estadoSolicitud = "pendiente"; // Valor por defecto
     }
 
-    public String getTipo_vivienda() {
-        return tipo_vivienda;
+    // Getters y Setters
+    public String getMascotaId() {
+        return mascotaId;
     }
 
-    public String getMascotas_previas() {
-        return mascotas_previas;
+    public void setMascotaId(String mascotaId) {
+        this.mascotaId = mascotaId;
     }
 
-    public String getEstado_vivienda() {
-        return estado_vivienda;
+    public String getAdoptanteId() {
+        return adoptanteId;
     }
 
-    public String getPermisopara_mascotas() {
-        return permisopara_mascotas;
+    public void setAdoptanteId(String adoptanteId) {
+        this.adoptanteId = adoptanteId;
     }
 
-    public int getNumero_personas() {
-        return numero_personas;
+    public String getNombre() {
+        return nombre;
     }
 
-    public String getNiños_casa() {
-        return niños_casa;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
-    public String getExperiencia_mascotas() {
-        return experiencia_mascotas;
+    public String getApellidoPaterno() {
+        return apellidoPaterno;
     }
 
-    public Date getFecha_solicitudAdopcion() {
-        return fecha_solicitudAdopcion;
+    public void setApellidoPaterno(String apellidoPaterno) {
+        this.apellidoPaterno = apellidoPaterno;
     }
 
-    public String getFoto_vivienda() {
-        return foto_vivienda;
+    public String getApellidoMaterno() {
+        return apellidoMaterno;
     }
 
-    public String getEstado_solicitudAdopcion() {
-        return estado_solicitudAdopcion;
+    public void setApellidoMaterno(String apellidoMaterno) {
+        this.apellidoMaterno = apellidoMaterno;
     }
 
-    public int getCodigo_usuario() {
-        return codigo_usuario;
+    public int getEdad() {
+        return edad;
     }
 
-    // Setters
-    public void setId_solicitudAdopcion(int id_solicitudAdopcion) {
-        this.id_solicitudAdopcion = id_solicitudAdopcion;
+    public void setEdad(int edad) {
+        this.edad = edad;
     }
 
-    public void setOcupacion_usuario(String ocupacion_usuario) {
-        this.ocupacion_usuario = ocupacion_usuario;
+    public String getCorreo() {
+        return correo;
     }
 
-    public void setTipo_vivienda(String tipo_vivienda) {
-        this.tipo_vivienda = tipo_vivienda;
+    public void setCorreo(String correo) {
+        this.correo = correo;
     }
 
-    public void setMascotas_previas(String mascotas_previas) {
-        this.mascotas_previas = mascotas_previas;
+    public String getOcupacion() {
+        return ocupacion;
     }
 
-    public void setEstado_vivienda(String estado_vivienda) {
-        this.estado_vivienda = estado_vivienda;
+    public void setOcupacion(String ocupacion) {
+        this.ocupacion = ocupacion;
     }
 
-    public void setPermisopara_mascotas(String permisopara_mascotas) {
-        this.permisopara_mascotas = permisopara_mascotas;
+    public int getPersonasVivienda() {
+        return personasVivienda;
     }
 
-    public void setNumero_personas(int numero_personas) {
-        this.numero_personas = numero_personas;
+    public void setPersonasVivienda(int personasVivienda) {
+        this.personasVivienda = personasVivienda;
     }
 
-    public void setNiños_casa(String niños_casa) {
-        this.niños_casa = niños_casa;
+    public String getHayNinos() {
+        return hayNinos;
     }
 
-    public void setExperiencia_mascotas(String experiencia_mascotas) {
-        this.experiencia_mascotas = experiencia_mascotas;
+    public void setHayNinos(String hayNinos) {
+        this.hayNinos = hayNinos;
     }
 
-    public void setFecha_solicitudAdopcion(Date fecha_solicitudAdopcion) {
-        this.fecha_solicitudAdopcion = fecha_solicitudAdopcion;
+    public String getPermiteMascotas() {
+        return permiteMascotas;
     }
 
-    public void setFoto_vivienda(String foto_vivienda) {
-        this.foto_vivienda = foto_vivienda;
+    public void setPermiteMascotas(String permiteMascotas) {
+        this.permiteMascotas = permiteMascotas;
     }
 
-    public void setEstado_solicitudAdopcion(String estado_solicitudAdopcion) {
-        this.estado_solicitudAdopcion = estado_solicitudAdopcion;
+    public String getTipoVivienda() {
+        return tipoVivienda;
     }
 
-    public void setCodigo_usuario(int codigo_usuario) {
-        this.codigo_usuario = codigo_usuario;
+    public void setTipoVivienda(String tipoVivienda) {
+        this.tipoVivienda = tipoVivienda;
+    }
+
+    public String getTipoPropiedad() {
+        return tipoPropiedad;
+    }
+
+    public void setTipoPropiedad(String tipoPropiedad) {
+        this.tipoPropiedad = tipoPropiedad;
+    }
+
+    public String getExperiencia() {
+        return experiencia;
+    }
+
+    public void setExperiencia(String experiencia) {
+        this.experiencia = experiencia;
+    }
+
+    public String getHistorialMascotas() {
+        return historialMascotas;
+    }
+
+    public void setHistorialMascotas(String historialMascotas) {
+        this.historialMascotas = historialMascotas;
+    }
+
+    public String getIneDocument() {
+        return ineDocument;
+    }
+
+    public void setIneDocument(String ineDocument) {
+        this.ineDocument = ineDocument;
+    }
+
+    public String getEspacioMascota() {
+        return espacioMascota;
+    }
+
+    public void setEspacioMascota(String espacioMascota) {
+        this.espacioMascota = espacioMascota;
+    }
+
+    public Date getFechaSolicitud() {
+        return fechaSolicitud;
+    }
+
+    public void setFechaSolicitud(Date fechaSolicitud) {
+        this.fechaSolicitud = fechaSolicitud;
+    }
+
+    public String getEstadoSolicitud() {
+        return estadoSolicitud;
+    }
+
+    public void setEstadoSolicitud(String estadoSolicitud) {
+        this.estadoSolicitud = estadoSolicitud;
+    }
+
+    @Override
+    public String toString() {
+        return "SolicitudAdopcion{" +
+                "mascotaId='" + mascotaId + '\'' +
+                ", adoptanteId='" + adoptanteId + '\'' +
+                ", nombre='" + nombre + '\'' +
+                ", apellidoPaterno='" + apellidoPaterno + '\'' +
+                ", apellidoMaterno='" + apellidoMaterno + '\'' +
+                ", edad=" + edad +
+                ", correo='" + correo + '\'' +
+                ", ocupacion='" + ocupacion + '\'' +
+                ", personasVivienda=" + personasVivienda +
+                ", hayNinos='" + hayNinos + '\'' +
+                ", permiteMascotas='" + permiteMascotas + '\'' +
+                ", tipoVivienda='" + tipoVivienda + '\'' +
+                ", tipoPropiedad='" + tipoPropiedad + '\'' +
+                ", experiencia='" + experiencia + '\'' +
+                ", historialMascotas='" + historialMascotas + '\'' +
+                ", ineDocument='" + ineDocument + '\'' +
+                ", espacioMascota='" + espacioMascota + '\'' +
+                ", fechaSolicitud=" + fechaSolicitud +
+                ", estadoSolicitud='" + estadoSolicitud + '\'' +
+                '}';
     }
 }

@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-
 import java.sql.Date;
 
 public class SolicitudAdopcionController {
@@ -24,7 +23,7 @@ public class SolicitudAdopcionController {
             List<SolicitudAdopcion> list = service.getAll();
             ctx.json(list);
         } catch (Exception e) {
-            ctx.status(500).result("Error al obtener solicitudes: " + e.getMessage());
+            ctx.status(500).json(Map.of("error", "Error al obtener solicitudes: " + e.getMessage()));
         }
     }
 
@@ -35,10 +34,12 @@ public class SolicitudAdopcionController {
             if (s != null) {
                 ctx.json(s);
             } else {
-                ctx.status(404).result("No encontrado");
+                ctx.status(404).json(Map.of("error", "Solicitud no encontrada"));
             }
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(Map.of("error", "ID inválido"));
         } catch (Exception e) {
-            ctx.status(400).result("ID inválido: " + e.getMessage());
+            ctx.status(500).json(Map.of("error", "Error interno: " + e.getMessage()));
         }
     }
 
@@ -49,52 +50,61 @@ public class SolicitudAdopcionController {
                 return;
             }
 
-            UploadedFile fotoVivienda = ctx.uploadedFile("foto_vivienda");
+            // Procesar archivos
+            UploadedFile ineFile = ctx.uploadedFile("ine_document");
+            UploadedFile espacioFile = ctx.uploadedFile("espacio_mascota");
             
-            if (fotoVivienda == null) {
-                ctx.status(400).json(Map.of("error", "La foto de la vivienda es obligatoria"));
+            if (ineFile == null || espacioFile == null) {
+                ctx.status(400).json(Map.of("error", "Ambos documentos (INE y espacio mascota) son obligatorios"));
                 return;
             }
 
-            String contentType = fotoVivienda.contentType();
-            if (!isValidImageFormat(contentType)) {
-                ctx.status(400).json(Map.of("error", "Formato de imagen no válido. Use JPG, JPEG o PNG"));
+            // Validar formatos de archivos
+            if (!isValidImageFormat(ineFile.contentType()) || !isValidImageFormat(espacioFile.contentType())) {
+                ctx.status(400).json(Map.of("error", "Formatos de imagen no válidos. Use JPG, JPEG o PNG"));
                 return;
             }
 
+            // Guardar archivos
             String uploadDir = "src/main/resources/uploads/adopcion/";
             Files.createDirectories(Paths.get(uploadDir));
             
-            String fileName = "vivienda_" + System.currentTimeMillis() + getFileExtension(fotoVivienda.filename());
-            Path filePath = Paths.get(uploadDir + fileName);
+            String ineFileName = "ine_" + System.currentTimeMillis() + getFileExtension(ineFile.filename());
+            String espacioFileName = "espacio_" + System.currentTimeMillis() + getFileExtension(espacioFile.filename());
             
-            try (InputStream is = fotoVivienda.content()) {
-                Files.copy(is, filePath);
-            }
+            saveUploadedFile(ineFile, uploadDir + ineFileName);
+            saveUploadedFile(espacioFile, uploadDir + espacioFileName);
 
+            // Crear solicitud
             SolicitudAdopcion solicitud = new SolicitudAdopcion();
-            solicitud.setOcupacion_usuario(ctx.formParam("ocupacion_usuario"));
-            solicitud.setTipo_vivienda(ctx.formParam("tipo_vivienda"));
-            solicitud.setMascotas_previas(ctx.formParam("mascotas_previas"));
-            solicitud.setEstado_vivienda(ctx.formParam("estado_vivienda"));
-            solicitud.setPermisopara_mascotas(ctx.formParam("permisopara_mascotas"));
-            solicitud.setNumero_personas(Integer.parseInt(ctx.formParam("numero_personas")));
-            solicitud.setNiños_casa(ctx.formParam("niños_casa"));
-            solicitud.setExperiencia_mascotas(ctx.formParam("experiencia_mascotas"));
-            solicitud.setEstado_solicitudAdopcion("Pendiente");
-            solicitud.setCodigo_usuario(Integer.parseInt(ctx.formParam("codigo_usuario")));
-            solicitud.setFecha_solicitudAdopcion(new Date(System.currentTimeMillis()));
-            
-            String imagePath = "/uploads/adopcion/" + fileName;
-            solicitud.setFoto_vivienda(imagePath);
+            solicitud.setMascotaId(ctx.formParam("mascota_id"));
+            solicitud.setAdoptanteId(ctx.formParam("adoptante_id"));
+            solicitud.setNombre(ctx.formParam("nombre"));
+            solicitud.setApellidoPaterno(ctx.formParam("apellido_paterno"));
+            solicitud.setApellidoMaterno(ctx.formParam("apellido_materno"));
+            solicitud.setEdad(Integer.parseInt(ctx.formParam("edad")));
+            solicitud.setCorreo(ctx.formParam("correo"));
+            solicitud.setOcupacion(ctx.formParam("ocupacion"));
+            solicitud.setPersonasVivienda(Integer.parseInt(ctx.formParam("personas_vivienda")));
+            solicitud.setHayNinos(ctx.formParam("hay_ninos"));
+            solicitud.setPermiteMascotas(ctx.formParam("permite_mascotas"));
+            solicitud.setTipoVivienda(ctx.formParam("tipo_vivienda"));
+            solicitud.setTipoPropiedad(ctx.formParam("tipo_propiedad"));
+            solicitud.setExperiencia(ctx.formParam("experiencia"));
+            solicitud.setHistorialMascotas(ctx.formParam("historial_mascotas"));
+            solicitud.setIneDocument("/uploads/adopcion/" + ineFileName);
+            solicitud.setEspacioMascota("/uploads/adopcion/" + espacioFileName);
+            solicitud.setFechaSolicitud(new Date(System.currentTimeMillis()));
+            solicitud.setEstadoSolicitud("pendiente");
 
             int idGenerado = service.createAndReturnId(solicitud);
             
             ctx.status(201).json(Map.of(
                 "success", true,
                 "message", "Solicitud registrada",
-                "id_solicitudAdopcion", idGenerado,
-                "foto_vivienda_url", imagePath
+                "id_solicitud", idGenerado,
+                "ine_url", solicitud.getIneDocument(),
+                "espacio_url", solicitud.getEspacioMascota()
             ));
             
         } catch (NumberFormatException e) {
@@ -102,6 +112,12 @@ public class SolicitudAdopcionController {
         } catch (Exception e) {
             ctx.status(500).json(Map.of("error", "Error interno: " + e.getMessage()));
             e.printStackTrace();
+        }
+    }
+
+    private void saveUploadedFile(UploadedFile file, String filePath) throws IOException {
+        try (InputStream is = file.content()) {
+            Files.copy(is, Paths.get(filePath));
         }
     }
 
@@ -133,63 +149,26 @@ public class SolicitudAdopcionController {
                 return;
             }
 
-            if (ctx.formParam("ocupacion_usuario") != null) {
-                solicitudActual.setOcupacion_usuario(ctx.formParam("ocupacion_usuario"));
-            }
-            if (ctx.formParam("tipo_vivienda") != null) {
-                solicitudActual.setTipo_vivienda(ctx.formParam("tipo_vivienda"));
-            }
-            if (ctx.formParam("mascotas_previas") != null) {
-                solicitudActual.setMascotas_previas(ctx.formParam("mascotas_previas"));
-            }
-            if (ctx.formParam("estado_vivienda") != null) {
-                solicitudActual.setEstado_vivienda(ctx.formParam("estado_vivienda"));
-            }
-            if (ctx.formParam("permisopara_mascotas") != null) {
-                solicitudActual.setPermisopara_mascotas(ctx.formParam("permisopara_mascotas"));
-            }
-            if (ctx.formParam("numero_personas") != null) {
-                solicitudActual.setNumero_personas(Integer.parseInt(ctx.formParam("numero_personas")));
-            }
-            if (ctx.formParam("niños_casa") != null) {
-                solicitudActual.setNiños_casa(ctx.formParam("niños_casa"));
-            }
-            if (ctx.formParam("experiencia_mascotas") != null) {
-                solicitudActual.setExperiencia_mascotas(ctx.formParam("experiencia_mascotas"));
-            }
+            // Actualizar campos básicos
+            if (ctx.formParam("nombre") != null) solicitudActual.setNombre(ctx.formParam("nombre"));
+            if (ctx.formParam("apellido_paterno") != null) solicitudActual.setApellidoPaterno(ctx.formParam("apellido_paterno"));
+            if (ctx.formParam("apellido_materno") != null) solicitudActual.setApellidoMaterno(ctx.formParam("apellido_materno"));
+            if (ctx.formParam("edad") != null) solicitudActual.setEdad(Integer.parseInt(ctx.formParam("edad")));
+            if (ctx.formParam("correo") != null) solicitudActual.setCorreo(ctx.formParam("correo"));
+            if (ctx.formParam("ocupacion") != null) solicitudActual.setOcupacion(ctx.formParam("ocupacion"));
+            if (ctx.formParam("personas_vivienda") != null) solicitudActual.setPersonasVivienda(Integer.parseInt(ctx.formParam("personas_vivienda")));
+            if (ctx.formParam("hay_ninos") != null) solicitudActual.setHayNinos(ctx.formParam("hay_ninos"));
+            if (ctx.formParam("permite_mascotas") != null) solicitudActual.setPermiteMascotas(ctx.formParam("permite_mascotas"));
+            if (ctx.formParam("tipo_vivienda") != null) solicitudActual.setTipoVivienda(ctx.formParam("tipo_vivienda"));
+            if (ctx.formParam("tipo_propiedad") != null) solicitudActual.setTipoPropiedad(ctx.formParam("tipo_propiedad"));
+            if (ctx.formParam("experiencia") != null) solicitudActual.setExperiencia(ctx.formParam("experiencia"));
+            if (ctx.formParam("historial_mascotas") != null) solicitudActual.setHistorialMascotas(ctx.formParam("historial_mascotas"));
+            if (ctx.formParam("estado_solicitud") != null) solicitudActual.setEstadoSolicitud(ctx.formParam("estado_solicitud"));
 
+            // Procesar archivos si se enviaron
             if (ctx.isMultipartFormData()) {
-                UploadedFile nuevaFoto = ctx.uploadedFile("foto_vivienda");
-                
-                if (nuevaFoto != null) {
-                    String contentType = nuevaFoto.contentType();
-                    if (!isValidImageFormat(contentType)) {
-                        ctx.status(400).json(Map.of("error", "Formato de imagen no válido. Use JPG, JPEG o PNG"));
-                        return;
-                    }
-
-                    if (solicitudActual.getFoto_vivienda() != null && !solicitudActual.getFoto_vivienda().isEmpty()) {
-                        try {
-                            Path pathAnterior = Paths.get("src/main/resources" + solicitudActual.getFoto_vivienda());
-                            Files.deleteIfExists(pathAnterior);
-                        } catch (IOException e) {
-                            System.err.println("Error al eliminar la imagen anterior: " + e.getMessage());
-                        }
-                    }
-
-                    String uploadDir = "src/main/resources/uploads/adopcion/";
-                    Files.createDirectories(Paths.get(uploadDir));
-                    
-                    String fileName = "vivienda_" + System.currentTimeMillis() + getFileExtension(nuevaFoto.filename());
-                    Path filePath = Paths.get(uploadDir + fileName);
-                    
-                    try (InputStream is = nuevaFoto.content()) {
-                        Files.copy(is, filePath);
-                    }
-
-                    String imagePath = "/uploads/adopcion/" + fileName;
-                    solicitudActual.setFoto_vivienda(imagePath);
-                }
+                processFileUpdate(ctx, "ine_document", solicitudActual::getIneDocument, solicitudActual::setIneDocument);
+                processFileUpdate(ctx, "espacio_mascota", solicitudActual::getEspacioMascota, solicitudActual::setEspacioMascota);
             }
 
             service.update(id, solicitudActual);
@@ -197,7 +176,7 @@ public class SolicitudAdopcionController {
             ctx.json(Map.of(
                 "success", true,
                 "message", "Solicitud actualizada",
-                "foto_vivienda_url", solicitudActual.getFoto_vivienda()
+                "solicitud", solicitudActual
             ));
             
         } catch (NumberFormatException e) {
@@ -208,13 +187,62 @@ public class SolicitudAdopcionController {
         }
     }
 
+    private void processFileUpdate(Context ctx, String fieldName, 
+                                 java.util.function.Supplier<String> getCurrentPath, 
+                                 java.util.function.Consumer<String> setNewPath) throws IOException {
+        UploadedFile newFile = ctx.uploadedFile(fieldName);
+        if (newFile != null) {
+            if (!isValidImageFormat(newFile.contentType())) {
+                throw new IllegalArgumentException("Formato de imagen no válido para " + fieldName);
+            }
+
+            // Eliminar archivo anterior si existe
+            String currentPath = getCurrentPath.get();
+            if (currentPath != null && !currentPath.isEmpty()) {
+                try {
+                    Path pathAnterior = Paths.get("src/main/resources" + currentPath);
+                    Files.deleteIfExists(pathAnterior);
+                } catch (IOException e) {
+                    System.err.println("Error al eliminar la imagen anterior: " + e.getMessage());
+                }
+            }
+
+            // Guardar nuevo archivo
+            String uploadDir = "src/main/resources/uploads/adopcion/";
+            String fileName = fieldName + "_" + System.currentTimeMillis() + getFileExtension(newFile.filename());
+            saveUploadedFile(newFile, uploadDir + fileName);
+            
+            // Actualizar path
+            setNewPath.accept("/uploads/adopcion/" + fileName);
+        }
+    }
+
     public void delete(Context ctx) {
         try {
             int id = Integer.parseInt(ctx.pathParam("id"));
+            // Primero obtenemos la solicitud para eliminar los archivos asociados
+            SolicitudAdopcion solicitud = service.getById(id);
+            if (solicitud != null) {
+                deleteFileIfExists(solicitud.getIneDocument());
+                deleteFileIfExists(solicitud.getEspacioMascota());
+            }
             service.delete(id);
             ctx.status(204);
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(Map.of("error", "ID inválido"));
         } catch (Exception e) {
-            ctx.status(400).result("Error: " + e.getMessage());
+            ctx.status(500).json(Map.of("error", "Error interno: " + e.getMessage()));
+        }
+    }
+
+    private void deleteFileIfExists(String filePath) {
+        if (filePath != null && !filePath.isEmpty()) {
+            try {
+                Path path = Paths.get("src/main/resources" + filePath);
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                System.err.println("Error al eliminar archivo: " + e.getMessage());
+            }
         }
     }
 }
