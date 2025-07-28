@@ -50,8 +50,8 @@ public class MascotaRepository {
 
     public int save(Mascota mascota) throws SQLException {
         String query = "INSERT INTO mascota (nombre, especie, sexo, peso, tamaño, esterilizado, " +
-                      "discapacitado, desparasitado, vacunas, descripcion, fotos_mascota, id_cedente) " +
-                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                      "discapacitado, desparasitado, vacunas, descripcion, fotos_mascota, id_cedente, estado) " +
+                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         try {
             try (Connection conn = DatabaseConfig.getConnection();
@@ -75,7 +75,7 @@ public class MascotaRepository {
     public void update(Mascota mascota) throws SQLException {
         String query = "UPDATE mascota SET nombre = ?, especie = ?, sexo = ?, peso = ?, " +
                       "tamaño = ?, esterilizado = ?, discapacitado = ?, desparasitado = ?, " +
-                      "vacunas = ?, descripcion = ?, fotos_mascota = ?, id_cedente = ? " +
+                      "vacunas = ?, descripcion = ?, fotos_mascota = ?, id_cedente = ?, estado = ? " +
                       "WHERE id_mascota = ?";
         
         try {
@@ -83,7 +83,7 @@ public class MascotaRepository {
                  PreparedStatement stmt = conn.prepareStatement(query)) {
                 
                 setMascotaParameters(stmt, mascota);
-                stmt.setInt(13, mascota.getId());
+                stmt.setInt(14, mascota.getId()); // Ahora es el parámetro 14 porque agregamos estado
                 stmt.executeUpdate();
             }
         } catch (Exception e) {
@@ -119,6 +119,7 @@ public class MascotaRepository {
         stmt.setString(10, mascota.getDescripcion());
         stmt.setString(11, mascota.getFotosAsString());
         stmt.setInt(12, mascota.getIdCedente());
+        stmt.setString(13, mascota.getEstado()); // Agregado el parámetro estado
     }
 
     private Mascota mapResultSetToMascota(ResultSet rs) throws SQLException {
@@ -136,6 +137,7 @@ public class MascotaRepository {
         mascota.setDescripcion(rs.getString("descripcion"));
         mascota.setFotosFromString(rs.getString("fotos_mascota"));
         mascota.setIdCedente(rs.getInt("id_cedente"));
+        mascota.setEstado(rs.getString("estado"));
         
         return mascota;
     }

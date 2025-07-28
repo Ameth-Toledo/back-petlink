@@ -60,6 +60,7 @@ public class MascotaController {
             String vacunas = ctx.formParam("vacunas");
             String descripcion = ctx.formParam("descripcion");
             int idCedente = Integer.parseInt(ctx.formParam("idCedente"));
+            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "Disponible"; // Valor por defecto
 
             // Procesar imágenes
             List<UploadedFile> fotosMascotas = ctx.uploadedFiles("fotos_mascota");
@@ -97,7 +98,7 @@ public class MascotaController {
             Mascota mascota = new Mascota(
                 nombre, especie, sexo, peso, tamaño,
                 esterilizado, discapacitado, desparasitado,
-                vacunas, descripcion, fileUrls, idCedente
+                vacunas, descripcion, fileUrls, idCedente, estado
             );
 
             Mascota nuevaMascota = service.createMascota(mascota);
@@ -106,7 +107,8 @@ public class MascotaController {
                 "success", true,
                 "message", "Mascota registrada",
                 "id", nuevaMascota.getId(),
-                "fotos_urls", fileUrls
+                "fotos_urls", fileUrls,
+                "estado", nuevaMascota.getEstado()
             ));
             
         } catch (NumberFormatException e) {
@@ -141,6 +143,7 @@ public class MascotaController {
             String vacunas = ctx.formParam("vacunas");
             String descripcion = ctx.formParam("descripcion");
             int idCedente = Integer.parseInt(ctx.formParam("idCedente"));
+            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "Disponible"; // Valor por defecto
 
             // Obtener mascota existente
             Mascota mascotaExistente = service.getMascotaById(id);
@@ -197,14 +200,17 @@ public class MascotaController {
             Mascota mascota = new Mascota(
                 nombre, especie, sexo, peso, tamaño,
                 esterilizado, discapacitado, desparasitado,
-                vacunas, descripcion, fileUrls, idCedente
+                vacunas, descripcion, fileUrls, idCedente, estado 
             );
             mascota.setId(id);
+            
+            Mascota mascotaActualizada = service.updateMascota(mascota);
             
             ctx.json(Map.of(
                 "success", true,
                 "message", "Mascota actualizada",
-                "fotos_urls", fileUrls
+                "fotos_urls", fileUrls,
+                "estado", mascotaActualizada.getEstado()
             ));
             
         } catch (NumberFormatException e) {

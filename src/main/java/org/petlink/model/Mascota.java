@@ -18,12 +18,13 @@ public class Mascota {
     private String descripcion;
     private List<String> fotos_mascota;
     private int idCedente;
+    private String estado;
     
     public Mascota() {}
 
     public Mascota(String nombre, String especie, String sexo, float peso, String tamaño, 
                   String esterilizado, String discapacitado, String desparasitado, 
-                  String vacunas, String descripcion, List<String> fotos_mascota, int idCedente) {
+                  String vacunas, String descripcion, List<String> fotos_mascota, int idCedente, String estado) {
         this.nombre = nombre;
         this.especie = especie;
         this.sexo = sexo;
@@ -36,6 +37,7 @@ public class Mascota {
         this.descripcion = descripcion;
         this.fotos_mascota = fotos_mascota;
         this.idCedente = idCedente;
+        this.estado = estado;
     }
 
     public String getFotosAsString() {
@@ -158,5 +160,13 @@ public class Mascota {
 
     public void setIdCedente(int idCedente) {
         this.idCedente = idCedente;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 }

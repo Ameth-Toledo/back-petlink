@@ -93,5 +93,18 @@ public class MascotaService {
         if (mascota.getIdCedente() <= 0) {
             throw new IllegalArgumentException("ID del cedente es inválido");
         }
+        
+        // Validación del estado
+        if (mascota.getEstado() == null || mascota.getEstado().trim().isEmpty()) {
+            throw new IllegalArgumentException("El estado es requerido");
+        }
+        
+        String estadoLower = mascota.getEstado().toLowerCase();
+        if (!estadoLower.equals("disponible") && 
+            !estadoLower.equals("adoptada") && 
+            !estadoLower.equals("en_proceso") && 
+            !estadoLower.equals("no_disponible")) {
+            throw new IllegalArgumentException("El estado debe ser 'Disponible', 'Adoptada', 'En_proceso' o 'No_disponible'");
+        }
     }
 }
