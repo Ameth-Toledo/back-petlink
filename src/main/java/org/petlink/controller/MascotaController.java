@@ -45,6 +45,7 @@ public class MascotaController {
             
             ctx.json(mascotasResponse);
         } catch (Exception e) {
+            e.printStackTrace(); // Para debugging
             ctx.status(500).json(errorResponse("Error al obtener mascotas", e));
         }
     }
@@ -79,33 +80,86 @@ public class MascotaController {
         } catch (NumberFormatException e) {
             ctx.status(400).json(errorResponse("ID inválido", e));
         } catch (Exception e) {
+            e.printStackTrace(); // Para debugging
             ctx.status(500).json(errorResponse("Error al buscar mascota", e));
         }
     }
 
     public void create(Context ctx) {
         try {
+            System.out.println("=== INICIO CREATE MASCOTA ===");
+            
             if (!ctx.isMultipartFormData()) {
+                System.out.println("ERROR: No es multipart/form-data");
                 ctx.status(400).json(Map.of("error", "Debe usar Content-Type: multipart/form-data"));
                 return;
             }
 
-            // Obtener datos del formulario
+            // Obtener y validar datos del formulario
             String nombre = ctx.formParam("nombre");
             String especie = ctx.formParam("especie");
             String sexo = ctx.formParam("sexo");
-            float peso = Float.parseFloat(ctx.formParam("peso"));
+            String pesoStr = ctx.formParam("peso");
             String tamaño = ctx.formParam("tamaño");
             String esterilizado = ctx.formParam("esterilizado");
             String discapacitado = ctx.formParam("discapacitado");
             String desparasitado = ctx.formParam("desparasitado");
             String vacunas = ctx.formParam("vacunas");
             String descripcion = ctx.formParam("descripcion");
-            int idCedente = Integer.parseInt(ctx.formParam("idCedente"));
-            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "disponible";
+            String idCedenteStr = ctx.formParam("idCedente");
+            String estado = ctx.formParam("estado");
+
+            System.out.println("Datos recibidos:");
+            System.out.println("nombre: " + nombre);
+            System.out.println("especie: " + especie);
+            System.out.println("sexo: " + sexo);
+            System.out.println("peso: " + pesoStr);
+            System.out.println("tamaño: " + tamaño);
+            System.out.println("esterilizado: " + esterilizado);
+            System.out.println("discapacitado: " + discapacitado);
+            System.out.println("desparasitado: " + desparasitado);
+            System.out.println("vacunas: " + vacunas);
+            System.out.println("descripcion: " + descripcion);
+            System.out.println("idCedente: " + idCedenteStr);
+            System.out.println("estado: " + estado);
+
+            // Validaciones básicas
+            if (nombre == null || nombre.trim().isEmpty()) {
+                ctx.status(400).json(Map.of("error", "El nombre es requerido"));
+                return;
+            }
+            if (especie == null || especie.trim().isEmpty()) {
+                ctx.status(400).json(Map.of("error", "La especie es requerida"));
+                return;
+            }
+            if (pesoStr == null || pesoStr.trim().isEmpty()) {
+                ctx.status(400).json(Map.of("error", "El peso es requerido"));
+                return;
+            }
+            if (idCedenteStr == null || idCedenteStr.trim().isEmpty()) {
+                ctx.status(400).json(Map.of("error", "El ID del cedente es requerido"));
+                return;
+            }
+
+            // Parsear valores numéricos
+            float peso;
+            int idCedente;
+            try {
+                peso = Float.parseFloat(pesoStr);
+                idCedente = Integer.parseInt(idCedenteStr);
+            } catch (NumberFormatException e) {
+                ctx.status(400).json(Map.of("error", "Formato numérico inválido en peso o idCedente"));
+                return;
+            }
+
+            // Asignar valor por defecto al estado si es null
+            if (estado == null || estado.trim().isEmpty()) {
+                estado = "disponible";
+            }
 
             // Procesar imágenes
             List<UploadedFile> fotosMascotas = ctx.uploadedFiles("fotos_mascota");
+            System.out.println("Fotos recibidas: " + (fotosMascotas != null ? fotosMascotas.size() : 0));
 
             if (fotosMascotas == null || fotosMascotas.size() < 3) {
                 ctx.status(400).json(Map.of("error", "Se requieren al menos 3 fotos de la mascota"));
@@ -119,6 +173,8 @@ public class MascotaController {
             for (int i = 0; i < fotosMascotas.size(); i++) {
                 UploadedFile foto = fotosMascotas.get(i);
                 
+                System.out.println("Procesando foto " + i + ": " + foto.filename() + ", tipo: " + foto.contentType());
+                
                 if (!isValidImageFormat(foto.contentType())) {
                     ctx.status(400).json(Map.of("error", "Formato de imagen no válido. Use JPG, JPEG o PNG"));
                     return;
@@ -131,6 +187,7 @@ public class MascotaController {
                 
                 try (InputStream is = foto.content()) {
                     Files.copy(is, filePath);
+                    System.out.println("Archivo guardado: " + filePath);
                 }
                 
                 fileUrls.add(fileUrl);
@@ -143,7 +200,9 @@ public class MascotaController {
                 vacunas, descripcion, fileUrls, idCedente, estado
             );
 
+            System.out.println("Creando mascota en la base de datos...");
             Mascota nuevaMascota = service.createMascota(mascota);
+            System.out.println("Mascota creada con ID: " + nuevaMascota.getId());
             
             // Crear respuesta con datos de la mascota
             Map<String, Object> mascotaData = new HashMap<>();
@@ -169,14 +228,20 @@ public class MascotaController {
             response.put("mascota", mascotaData);
             
             ctx.status(201).json(response);
+            System.out.println("=== FIN CREATE MASCOTA - ÉXITO ===");
             
         } catch (NumberFormatException e) {
+            e.printStackTrace();
             ctx.status(400).json(errorResponse("Formato numérico inválido", e));
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             ctx.status(400).json(errorResponse("Datos inválidos", e));
         } catch (IOException e) {
+            e.printStackTrace();
             ctx.status(500).json(errorResponse("Error al guardar archivos", e));
         } catch (Exception e) {
+            e.printStackTrace(); // Esto es crucial para debugging
+            System.out.println("ERROR INESPERADO: " + e.getMessage());
             ctx.status(500).json(errorResponse("Error interno del servidor", e));
         }
     }
@@ -190,19 +255,36 @@ public class MascotaController {
                 return;
             }
 
-            // Obtener datos del formulario
+            // Obtener datos del formulario con validaciones
             String nombre = ctx.formParam("nombre");
             String especie = ctx.formParam("especie");
             String sexo = ctx.formParam("sexo");
-            float peso = Float.parseFloat(ctx.formParam("peso"));
+            String pesoStr = ctx.formParam("peso");
             String tamaño = ctx.formParam("tamaño");
             String esterilizado = ctx.formParam("esterilizado");
             String discapacitado = ctx.formParam("discapacitado");
             String desparasitado = ctx.formParam("desparasitado");
             String vacunas = ctx.formParam("vacunas");
             String descripcion = ctx.formParam("descripcion");
-            int idCedente = Integer.parseInt(ctx.formParam("idCedente"));
-            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "disponible";
+            String idCedenteStr = ctx.formParam("idCedente");
+            String estado = ctx.formParam("estado");
+
+            // Validaciones básicas
+            if (pesoStr == null || pesoStr.trim().isEmpty()) {
+                ctx.status(400).json(Map.of("error", "El peso es requerido"));
+                return;
+            }
+            if (idCedenteStr == null || idCedenteStr.trim().isEmpty()) {
+                ctx.status(400).json(Map.of("error", "El ID del cedente es requerido"));
+                return;
+            }
+
+            float peso = Float.parseFloat(pesoStr);
+            int idCedente = Integer.parseInt(idCedenteStr);
+            
+            if (estado == null || estado.trim().isEmpty()) {
+                estado = "disponible";
+            }
 
             // Obtener mascota existente
             Mascota mascotaExistente = service.getMascotaById(id);
@@ -291,12 +373,16 @@ public class MascotaController {
             ctx.json(response);
             
         } catch (NumberFormatException e) {
+            e.printStackTrace();
             ctx.status(400).json(errorResponse("Formato numérico inválido", e));
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             ctx.status(400).json(errorResponse("Datos inválidos", e));
         } catch (IOException e) {
+            e.printStackTrace();
             ctx.status(500).json(errorResponse("Error al guardar archivos", e));
         } catch (Exception e) {
+            e.printStackTrace();
             ctx.status(500).json(errorResponse("Error interno del servidor", e));
         }
     }
@@ -323,6 +409,7 @@ public class MascotaController {
         } catch (NumberFormatException e) {
             ctx.status(400).json(errorResponse("ID inválido", e));
         } catch (Exception e) {
+            e.printStackTrace();
             ctx.status(500).json(errorResponse("Error al eliminar mascota", e));
         }
     }
@@ -337,6 +424,9 @@ public class MascotaController {
 
     private String getFileExtension(String filename) {
         try {
+            if (filename == null || filename.trim().isEmpty()) {
+                return ".jpg";
+            }
             String extension = filename.substring(filename.lastIndexOf(".")).toLowerCase();
             if (extension.equals(".jpeg")) return ".jpg";
             return extension;
