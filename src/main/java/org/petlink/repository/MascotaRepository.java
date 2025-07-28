@@ -11,7 +11,7 @@ public class MascotaRepository {
 
     public List<Mascota> findAll() throws SQLException {
         List<Mascota> mascotas = new ArrayList<>();
-        String query = "SELECT * FROM mascota";
+        String query = "SELECT * FROM mascota ORDER BY fecha_registro DESC"; // Ordenar por fecha más reciente
 
         try {
             try (Connection conn = DatabaseConfig.getConnection();
@@ -62,7 +62,9 @@ public class MascotaRepository {
                 
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
-                        return generatedKeys.getInt(1);
+                        int id = generatedKeys.getInt(1);
+                        // Recuperar la mascota completa con la fecha de registro
+                        return id;
                     }
                 }
             }
@@ -83,7 +85,7 @@ public class MascotaRepository {
                  PreparedStatement stmt = conn.prepareStatement(query)) {
                 
                 setMascotaParameters(stmt, mascota);
-                stmt.setInt(14, mascota.getId()); // Ahora es el parámetro 14 porque agregamos estado
+                stmt.setInt(14, mascota.getId());
                 stmt.executeUpdate();
             }
         } catch (Exception e) {
@@ -119,7 +121,7 @@ public class MascotaRepository {
         stmt.setString(10, mascota.getDescripcion());
         stmt.setString(11, mascota.getFotosAsString());
         stmt.setInt(12, mascota.getIdCedente());
-        stmt.setString(13, mascota.getEstado()); // Agregado el parámetro estado
+        stmt.setString(13, mascota.getEstado());
     }
 
     private Mascota mapResultSetToMascota(ResultSet rs) throws SQLException {
@@ -138,6 +140,12 @@ public class MascotaRepository {
         mascota.setFotosFromString(rs.getString("fotos_mascota"));
         mascota.setIdCedente(rs.getInt("id_cedente"));
         mascota.setEstado(rs.getString("estado"));
+        
+        // Mapear la fecha de registro
+        Timestamp fechaTimestamp = rs.getTimestamp("fecha_registro");
+        if (fechaTimestamp != null) {
+            mascota.setFechaRegistro(fechaTimestamp.toLocalDateTime());
+        }
         
         return mascota;
     }

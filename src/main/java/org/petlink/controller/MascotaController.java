@@ -60,7 +60,7 @@ public class MascotaController {
             String vacunas = ctx.formParam("vacunas");
             String descripcion = ctx.formParam("descripcion");
             int idCedente = Integer.parseInt(ctx.formParam("idCedente"));
-            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "Disponible"; // Valor por defecto
+            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "disponible"; // Valor por defecto
 
             // Procesar imágenes
             List<UploadedFile> fotosMascotas = ctx.uploadedFiles("fotos_mascota");
@@ -108,7 +108,8 @@ public class MascotaController {
                 "message", "Mascota registrada",
                 "id", nuevaMascota.getId(),
                 "fotos_urls", fileUrls,
-                "estado", nuevaMascota.getEstado()
+                "estado", nuevaMascota.getEstado(),
+                "fecha_registro", nuevaMascota.getFechaRegistroFormatted() // Agregar fecha
             ));
             
         } catch (NumberFormatException e) {
@@ -143,7 +144,7 @@ public class MascotaController {
             String vacunas = ctx.formParam("vacunas");
             String descripcion = ctx.formParam("descripcion");
             int idCedente = Integer.parseInt(ctx.formParam("idCedente"));
-            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "Disponible"; // Valor por defecto
+            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "disponible"; // Valor por defecto
 
             // Obtener mascota existente
             Mascota mascotaExistente = service.getMascotaById(id);
@@ -210,7 +211,8 @@ public class MascotaController {
                 "success", true,
                 "message", "Mascota actualizada",
                 "fotos_urls", fileUrls,
-                "estado", mascotaActualizada.getEstado()
+                "estado", mascotaActualizada.getEstado(),
+                "fecha_registro", mascotaActualizada.getFechaRegistroFormatted() // Agregar fecha
             ));
             
         } catch (NumberFormatException e) {

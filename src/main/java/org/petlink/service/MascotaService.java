@@ -20,8 +20,8 @@ public class MascotaService {
     public Mascota createMascota(Mascota mascota) throws SQLException, IllegalArgumentException {
         validateMascota(mascota);
         int id = repository.save(mascota);
-        mascota.setId(id);
-        return mascota;
+        // Recuperar la mascota completa con la fecha de registro desde la base de datos
+        return repository.findById(id);
     }
 
     public Mascota updateMascota(Mascota mascota) throws SQLException, IllegalArgumentException {
@@ -30,7 +30,8 @@ public class MascotaService {
             throw new IllegalArgumentException("ID de mascota inválido");
         }
         repository.update(mascota);
-        return mascota;
+        // Devolver la mascota actualizada con todos los datos, incluyendo la fecha
+        return repository.findById(mascota.getId());
     }
 
     public void deleteMascota(int id) throws SQLException {
@@ -104,7 +105,7 @@ public class MascotaService {
             !estadoLower.equals("adoptada") && 
             !estadoLower.equals("en_proceso") && 
             !estadoLower.equals("no_disponible")) {
-            throw new IllegalArgumentException("El estado debe ser 'Disponible', 'Adoptada', 'En_proceso' o 'No_disponible'");
+            throw new IllegalArgumentException("El estado debe ser 'disponible', 'adoptada', 'en_proceso' o 'no_disponible'");
         }
     }
 }

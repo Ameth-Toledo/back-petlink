@@ -1,5 +1,7 @@
 package org.petlink.model;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -19,6 +21,7 @@ public class Mascota {
     private List<String> fotos_mascota;
     private int idCedente;
     private String estado;
+    private LocalDateTime fechaRegistro; 
     
     public Mascota() {}
 
@@ -56,6 +59,14 @@ public class Mascota {
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
         }
+    }
+
+    public String getFechaRegistroFormatted() {
+        if (fechaRegistro == null) {
+            return null;
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return fechaRegistro.format(formatter);
     }
     
     public int getId() {
@@ -168,5 +179,13 @@ public class Mascota {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public LocalDateTime getFechaRegistro() {
+        return fechaRegistro;
+    }
+
+    public void setFechaRegistro(LocalDateTime fechaRegistro) {
+        this.fechaRegistro = fechaRegistro;
     }
 }
