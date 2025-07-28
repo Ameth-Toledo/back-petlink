@@ -19,7 +19,31 @@ public class MascotaController {
     public void getAll(Context ctx) {
         try {
             List<Mascota> mascotas = service.getAllMascotas();
-            ctx.json(mascotas);
+            // Convertir las mascotas a un formato que incluya la fecha formateada
+            List<Map<String, Object>> mascotasResponse = new ArrayList<>();
+            
+            for (Mascota mascota : mascotas) {
+                Map<String, Object> mascotaMap = new HashMap<>();
+                mascotaMap.put("id", mascota.getId());
+                mascotaMap.put("nombre", mascota.getNombre());
+                mascotaMap.put("especie", mascota.getEspecie());
+                mascotaMap.put("sexo", mascota.getSexo());
+                mascotaMap.put("peso", mascota.getPeso());
+                mascotaMap.put("tamaño", mascota.getTamaño());
+                mascotaMap.put("esterilizado", mascota.getEsterilizado());
+                mascotaMap.put("discapacitado", mascota.getDiscapacitado());
+                mascotaMap.put("desparasitado", mascota.getDesparasitado());
+                mascotaMap.put("vacunas", mascota.getVacunas());
+                mascotaMap.put("descripcion", mascota.getDescripcion());
+                mascotaMap.put("fotos_mascota", mascota.getFotos_mascota());
+                mascotaMap.put("idCedente", mascota.getIdCedente());
+                mascotaMap.put("estado", mascota.getEstado());
+                mascotaMap.put("fechaRegistro", mascota.getFechaRegistroFormatted());
+                
+                mascotasResponse.add(mascotaMap);
+            }
+            
+            ctx.json(mascotasResponse);
         } catch (Exception e) {
             ctx.status(500).json(errorResponse("Error al obtener mascotas", e));
         }
@@ -30,7 +54,25 @@ public class MascotaController {
             int id = Integer.parseInt(ctx.pathParam("id"));
             Mascota mascota = service.getMascotaById(id);
             if (mascota != null) {
-                ctx.json(mascota);
+                // Crear respuesta con fecha formateada
+                Map<String, Object> response = new HashMap<>();
+                response.put("id", mascota.getId());
+                response.put("nombre", mascota.getNombre());
+                response.put("especie", mascota.getEspecie());
+                response.put("sexo", mascota.getSexo());
+                response.put("peso", mascota.getPeso());
+                response.put("tamaño", mascota.getTamaño());
+                response.put("esterilizado", mascota.getEsterilizado());
+                response.put("discapacitado", mascota.getDiscapacitado());
+                response.put("desparasitado", mascota.getDesparasitado());
+                response.put("vacunas", mascota.getVacunas());
+                response.put("descripcion", mascota.getDescripcion());
+                response.put("fotos_mascota", mascota.getFotos_mascota());
+                response.put("idCedente", mascota.getIdCedente());
+                response.put("estado", mascota.getEstado());
+                response.put("fechaRegistro", mascota.getFechaRegistroFormatted());
+                
+                ctx.json(response);
             } else {
                 ctx.status(404).json(errorResponse("Mascota no encontrada", null));
             }
@@ -60,7 +102,7 @@ public class MascotaController {
             String vacunas = ctx.formParam("vacunas");
             String descripcion = ctx.formParam("descripcion");
             int idCedente = Integer.parseInt(ctx.formParam("idCedente"));
-            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "disponible"; // Valor por defecto
+            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "disponible";
 
             // Procesar imágenes
             List<UploadedFile> fotosMascotas = ctx.uploadedFiles("fotos_mascota");
@@ -103,14 +145,30 @@ public class MascotaController {
 
             Mascota nuevaMascota = service.createMascota(mascota);
             
-            ctx.status(201).json(Map.of(
-                "success", true,
-                "message", "Mascota registrada",
-                "id", nuevaMascota.getId(),
-                "fotos_urls", fileUrls,
-                "estado", nuevaMascota.getEstado(),
-                "fecha_registro", nuevaMascota.getFechaRegistroFormatted() // Agregar fecha
-            ));
+            // Crear respuesta con datos de la mascota
+            Map<String, Object> mascotaData = new HashMap<>();
+            mascotaData.put("id", nuevaMascota.getId());
+            mascotaData.put("nombre", nuevaMascota.getNombre());
+            mascotaData.put("especie", nuevaMascota.getEspecie());
+            mascotaData.put("sexo", nuevaMascota.getSexo());
+            mascotaData.put("peso", nuevaMascota.getPeso());
+            mascotaData.put("tamaño", nuevaMascota.getTamaño());
+            mascotaData.put("esterilizado", nuevaMascota.getEsterilizado());
+            mascotaData.put("discapacitado", nuevaMascota.getDiscapacitado());
+            mascotaData.put("desparasitado", nuevaMascota.getDesparasitado());
+            mascotaData.put("vacunas", nuevaMascota.getVacunas());
+            mascotaData.put("descripcion", nuevaMascota.getDescripcion());
+            mascotaData.put("fotos_mascota", nuevaMascota.getFotos_mascota());
+            mascotaData.put("idCedente", nuevaMascota.getIdCedente());
+            mascotaData.put("estado", nuevaMascota.getEstado());
+            mascotaData.put("fechaRegistro", nuevaMascota.getFechaRegistroFormatted());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Mascota registrada");
+            response.put("mascota", mascotaData);
+            
+            ctx.status(201).json(response);
             
         } catch (NumberFormatException e) {
             ctx.status(400).json(errorResponse("Formato numérico inválido", e));
@@ -144,7 +202,7 @@ public class MascotaController {
             String vacunas = ctx.formParam("vacunas");
             String descripcion = ctx.formParam("descripcion");
             int idCedente = Integer.parseInt(ctx.formParam("idCedente"));
-            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "disponible"; // Valor por defecto
+            String estado = ctx.formParam("estado") != null ? ctx.formParam("estado") : "disponible";
 
             // Obtener mascota existente
             Mascota mascotaExistente = service.getMascotaById(id);
@@ -207,13 +265,30 @@ public class MascotaController {
             
             Mascota mascotaActualizada = service.updateMascota(mascota);
             
-            ctx.json(Map.of(
-                "success", true,
-                "message", "Mascota actualizada",
-                "fotos_urls", fileUrls,
-                "estado", mascotaActualizada.getEstado(),
-                "fecha_registro", mascotaActualizada.getFechaRegistroFormatted() // Agregar fecha
-            ));
+            // Crear respuesta con datos de la mascota actualizada
+            Map<String, Object> mascotaData = new HashMap<>();
+            mascotaData.put("id", mascotaActualizada.getId());
+            mascotaData.put("nombre", mascotaActualizada.getNombre());
+            mascotaData.put("especie", mascotaActualizada.getEspecie());
+            mascotaData.put("sexo", mascotaActualizada.getSexo());
+            mascotaData.put("peso", mascotaActualizada.getPeso());
+            mascotaData.put("tamaño", mascotaActualizada.getTamaño());
+            mascotaData.put("esterilizado", mascotaActualizada.getEsterilizado());
+            mascotaData.put("discapacitado", mascotaActualizada.getDiscapacitado());
+            mascotaData.put("desparasitado", mascotaActualizada.getDesparasitado());
+            mascotaData.put("vacunas", mascotaActualizada.getVacunas());
+            mascotaData.put("descripcion", mascotaActualizada.getDescripcion());
+            mascotaData.put("fotos_mascota", mascotaActualizada.getFotos_mascota());
+            mascotaData.put("idCedente", mascotaActualizada.getIdCedente());
+            mascotaData.put("estado", mascotaActualizada.getEstado());
+            mascotaData.put("fechaRegistro", mascotaActualizada.getFechaRegistroFormatted());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Mascota actualizada");
+            response.put("mascota", mascotaData);
+            
+            ctx.json(response);
             
         } catch (NumberFormatException e) {
             ctx.status(400).json(errorResponse("Formato numérico inválido", e));
